@@ -1,7 +1,7 @@
 # AERIMS(Auto Expiry Reminder with Inventory management System)
 - Hi, Welcome to my project. this is my final year project for my Diploma.
-- Im taking Diploma in Electronics Engineering (Computer) at the Ploytechnique of Kota Kinabalu Sabah.
-- The purpose I build this project is for my Diploma level final year project.
+- I'm taking Diploma in Electronics Engineering (Computer) at the Polytechnique of Kota Kinabalu Sabah.
+- I build this project for my Diploma level final year project.
 
 <br> 
 ///////////////////////////////////// <br> 
