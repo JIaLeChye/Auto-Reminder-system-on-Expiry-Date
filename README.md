@@ -6,7 +6,8 @@
 <br> 
 ///////////////////////////////////// <br> 
 ------------DESCRIPTION--------------<br> 
-////////////////////////////////////
+//////////////////////////////////// <br> 
+
 - This project is a Auto Reminder System on the Expiry date.
 - This project is based on ESP32 and Homeassistant OS
 - This source code in this project might be in C languager (using Arduino IDE) or ymal( Homeassistant OS)
