@@ -4,8 +4,8 @@
 - The purpose I build this project is for my Diploma level final year project.
 
 <br> 
-/////////////////////////////////////
-------------DESCRIPTION--------------
+///////////////////////////////////// <br> 
+------------DESCRIPTION--------------<br> 
 ////////////////////////////////////
 - This project is a Auto Reminder System on the Expiry date.
 - This project is based on ESP32 and Homeassistant OS
