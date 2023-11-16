@@ -1,6 +1,7 @@
 const express = require('express');
 const mqtt = require('mqtt');
 const mysql = require('mysql');
+const fs = require('fs');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -9,9 +10,10 @@ const mqttOptions = {
   // Specify your MQTT broker details
   host: 'j6ee141d.ala.us-east-1.emqxsl.com',
   port: 8883,
-  clientId: 'Terminal',
-  usernam: 'Haos',
+  clientId: 'AERIMS_web',
+  username: 'Haos',
   password: 'null',
+  ca:fs.readFileSync('Cert/emqxsl-ca.crt'),
 };
 
 const mqttClient = mqtt.connect(mqttOptions);
@@ -28,7 +30,7 @@ const connection = mysql.createConnection(dbConfig);
 
 mqttClient.on('connect', () => {
   console.log('Connected to MQTT broker');
-  mqttClient.subscribe('rfid/nuids');
+  mqttClient.subscribe('aerims/nuid');
 });
 
 mqttClient.on('message', (topic, message) => {
