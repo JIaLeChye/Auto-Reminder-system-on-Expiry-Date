@@ -1,13 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RFID NUIDs</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AERIMS</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h2>RFID NUIDs</h2>
-  <ul id="rfidList"></ul>
-  <script src="js/script.js"></script>
+    <div class="container">
+        <h2>AERIMS</h2>
+        <form id="expiryForm">
+            <label for="rfidCode">RFID Code:</label>
+            <input type="text" id="rfidCode" name="rfidCode" required>
+
+            <label for="expiryDate">Expiry Date:</label>
+            <input type="date" id="expiryDate" name="expiryDate" required>
+
+            <button type="button" onclick="addData()">Add RFID Data</button>
+        </form>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>

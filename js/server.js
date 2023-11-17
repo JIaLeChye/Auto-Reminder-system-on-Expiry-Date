@@ -6,17 +6,15 @@ const fs = require('fs');
 const app = express();
 const port = process.env.PORT || 3000;
 
-const mqttOptions = {
-  // Specify your MQTT broker details
-  host: 'j6ee141d.ala.us-east-1.emqxsl.com',
-  port: 8883,
-  clientId: 'AERIMS_web',
-  username: 'Haos',
-  password: 'null',
-  ca:fs.readFileSync('Cert/emqxsl-ca.crt'),
-};
-
-const mqttClient = mqtt.connect(mqttOptions);
+const clientId = `mqtt_${Math.random().toString(16).slice(3)}`;
+const username = 'Web';
+const password = 'web123';
+const topic = 'areims/nuid';
+const client = mqtt.connect('mqtts://j6ee141d.ala.us-east-1.emqxsl.com:8883/mqtt', {
+  clientId,
+  username, 
+  password, 
+})
 
 const dbConfig = {
   // Specify your MySQL database details
@@ -24,17 +22,53 @@ const dbConfig = {
   user: 'root',
   password: '',
   database: 'AERIMS',
+  insecureAuth: true, 
 };
 
 const connection = mysql.createConnection(dbConfig);
 
-mqttClient.on('connect', () => {
+// Function to check the database connection
+const checkDatabaseConnection = () => {
+  connection.ping((error) => {
+    if (error) {
+      console.error('Error connecting to MySQL database:', error);
+    } else {
+      console.log('Connected to MySQL database');
+    }
+  });
+};
+
+// Check the database connection on application startup
+checkDatabaseConnection();
+
+
+client.on('connect', () => {
   console.log('Connected to MQTT broker');
-  mqttClient.subscribe('aerims/nuid');
+  //client.subscribe('aerims/nuid');
+  //const topic = 'areims/nuid'
+  const qos = 0
+  client.subscribe(topic, {qos}, (error) => {
+    if(error)
+    {
+      console.log('subscrbe error:', error)
+    return
+    }
+  
+    console.log(`subscribe to '${topic}'`)
+  })
 });
 
-mqttClient.on('message', (topic, message) => {
-  const rfidNUID = message.toString();
+
+
+
+
+
+client.on('message', (topic , payload) => {
+  //const topic = receivedTopic.toString();
+  //const topic = 'aerims/nuid'; 
+  //const sub_topic = topic.toString();
+  console.log('message received on topic:', topic);
+  const rfidNUID = payload.toString();
   const insertQuery = `INSERT INTO RFIDData (rfid_code) VALUES ('${rfidNUID}')`;
 
   connection.query(insertQuery, (error, results) => {
@@ -45,6 +79,7 @@ mqttClient.on('message', (topic, message) => {
     }
   });
 });
+
 
 app.get('/rfidNUIDs', (req, res) => {
   const selectQuery = 'SELECT rfid_code FROM RFIDData';
