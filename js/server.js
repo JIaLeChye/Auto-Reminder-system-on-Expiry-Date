@@ -9,12 +9,31 @@ const port = process.env.PORT || 3000;
 const clientId = `mqtt_${Math.random().toString(16).slice(3)}`;
 const username = 'Web';
 const password = 'web123';
-const topic = 'areims/nuid';
-const client = mqtt.connect('mqtts://j6ee141d.ala.us-east-1.emqxsl.com:8883/mqtt', {
+const topic = 'aerims/nuid';
+const qos = 2; 
+const mqtt_url = 'mqtts://j6ee141d.ala.us-east-1.emqxsl.com:8883/mqtt'
+
+const option = {
   clientId,
   username, 
   password, 
-})
+}
+
+const client = mqtt.connect(mqtt_url, option);
+
+client.on('connect', () => {
+  console.log('Connected to MQTT broker');
+});
+
+client.subscribe(topic, (qos), (error) => {
+  if (error) {
+    console.log('subscribe error:', error)
+    return
+  }
+  console.log(`Subscribe to topic '${topic}'`)
+}); 
+
+
 
 const dbConfig = {
   // Specify your MySQL database details
@@ -42,34 +61,12 @@ const checkDatabaseConnection = () => {
 checkDatabaseConnection();
 
 
-client.on('connect', () => {
-  console.log('Connected to MQTT broker');
-  //client.subscribe('aerims/nuid');
-  //const topic = 'areims/nuid'
-  const qos = 0
-  client.subscribe(topic, {qos}, (error) => {
-    if(error)
-    {
-      console.log('subscrbe error:', error)
-    return
-    }
-  
-    console.log(`subscribe to '${topic}'`)
-  })
-});
-
-
-
-
-
 
 client.on('message', (topic , payload) => {
-  //const topic = receivedTopic.toString();
-  //const topic = 'aerims/nuid'; 
-  //const sub_topic = topic.toString();
-  console.log('message received on topic:', topic);
+
+  console.log('message received on topic:', topic, payload.toString());
   const rfidNUID = payload.toString();
-  const insertQuery = `INSERT INTO RFIDData (rfid_code) VALUES ('${rfidNUID}')`;
+  const insertQuery = `INSERT INTO Product_data (NUID) VALUES ('${rfidNUID}')`;
 
   connection.query(insertQuery, (error, results) => {
     if (error) {
