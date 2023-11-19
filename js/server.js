@@ -79,7 +79,7 @@ client.on('message', (topic , payload) => {
 
 
 app.get('/rfidNUIDs', (req, res) => {
-  const selectQuery = 'SELECT rfid_code FROM RFIDData';
+  const selectQuery = 'SELECT Product_data FROM NUID';
 
   connection.query(selectQuery, (error, results) => {
     if (error) {
