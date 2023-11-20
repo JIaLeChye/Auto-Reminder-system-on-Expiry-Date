@@ -111,6 +111,24 @@ app.get('/latestRFIDNUID', (req, res) => {
   });
 });
 
+// Assuming expiry_date is stored in 'YYYY-MM-DD HH:mm:ss' format
+const selectAllProductDataQuery = 'SELECT NUID, Product_name, DATE_FORMAT(expiry_date, "%Y-%m-%d %H:%i:%s") AS expiry_date FROM Product_data';
+
+app.get('/allProductData', (req, res) => {
+  connection.query(selectAllProductDataQuery, (error, results) => {
+    if (error) {
+      console.error('Error fetching all product data:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      const productData = results.map(result => ({
+        NUID: result.NUID,
+        Product_name: result.Product_name,
+        expiry_date: result.expiry_date,
+      }));
+      res.json({ productData });
+    }
+  });
+});
 
 
 app.post('/modifyProduct', async (req, res) => {

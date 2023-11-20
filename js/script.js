@@ -32,8 +32,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const modifyProduct = async () => {
     const rfidCode = document.getElementById('rfidCodeDisplay').innerText.split(': ')[1];
     const productName = document.getElementById('productName').value;
-    const expiryDate = document.getElementById('expiryDate').value;
-
+    const expiryDateInput = document.getElementById('expiryDate');
+    const expiryDate = expiryDateInput.value;
+  
+    // Validate expiry date
+    const currentDate = new Date();
+    const selectedDate = new Date(expiryDate);
+  
+    if (selectedDate < currentDate) {
+      alert('Expiry date cannot be earlier than today.');
+      return;
+    }
+  
     try {
       const response = await fetch('http://localhost:3000/modifyProduct', {
         method: 'POST',
@@ -42,11 +52,16 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         body: JSON.stringify({ rfidCode, productName, expiryDate }),
       });
-
+  
       const data = await response.json();
-
+  
       if (data.success) {
         alert('Product modified successfully!');
+        // Clear input fields after successful modification
+        document.getElementById('productName').value = '';
+        expiryDateInput.value = '';
+        // Reload the page to reflect changes immediately
+        location.reload();
       } else {
         alert('Failed to modify product. Please try again.');
       }
@@ -55,3 +70,4 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('An error occurred while modifying the product.');
     }
   };
+  
