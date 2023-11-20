@@ -1,4 +1,6 @@
 const express = require('express');
+const cors = require('cors'); 
+// const bodyParser = require('body-parser');
 const mqtt = require('mqtt');
 const mysql = require('mysql');
 const fs = require('fs');
@@ -25,7 +27,7 @@ client.on('connect', () => {
   console.log('Connected to MQTT broker');
 });
 
-client.subscribe(topic, (qos), (error) => {
+client.subscribe(topic, qos, (error) => {
   if (error) {
     console.log('subscribe error:', error)
     return
@@ -77,21 +79,81 @@ client.on('message', (topic , payload) => {
   });
 });
 
+app.use(cors()); 
+app.use(express.json());
+//app.use(bodyParser.json()); 
 
-app.get('/rfidNUIDs', (req, res) => {
-  const selectQuery = 'SELECT Product_data FROM NUID';
+/*app.get('/rfidNUIDs', (req, res) => {
+  const selectQuery = 'SELECT * FROM Product_data';
 
   connection.query(selectQuery, (error, results) => {
     if (error) {
       console.error('Error fetching RFID NUIDs:', error);
       res.status(500).json({ error: 'Internal Server Error' });
     } else {
-      const rfidNUIDs = results.map((result) => result.rfid_code);
+      const rfidNUIDs = results.map((result) => result.NUID);
       res.json({ rfidNUIDs });
+    }
+  });
+});*/
+
+app.get('/latestRFIDNUID', (req, res) => {
+  const selectQuery = 'SELECT NUID FROM Product_data ORDER BY timestamp_column DESC LIMIT 1';
+
+  connection.query(selectQuery, (error, results) => {
+    if (error) {
+      console.error('Error fetching latest RFID NUID:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      const latestRFIDNUID = results[0] ? results[0].NUID : null;
+      res.json({ latestRFIDNUID });
     }
   });
 });
 
+
+
+app.post('/modifyProduct', async (req, res) => {
+  try {
+    const { rfidCode, productName, expiryDate } = req.body;
+
+    if (!productName || !expiryDate) {
+      return res.status(400).json({ success: false, message: 'Product name and expiry date are required.' });
+    }
+
+    const updateQuery = `
+      UPDATE Product_data
+      SET Product_name = ?, expiry_date = ?
+      WHERE NUID = ?`;
+
+    await new Promise((resolve, reject) => {
+      connection.query(updateQuery, [productName, expiryDate, rfidCode], (error, results) => {
+        if (error) {
+          console.error('Error modifying product:', error);
+          reject(error);
+        } else {
+          resolve(results);
+        }
+      });
+    });
+
+    res.json({ success: true, message: 'Product modified successfully' });
+  } catch (error) {
+    console.error('Error modifying product:', error);
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+
+
+
+

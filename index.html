@@ -1,25 +1,35 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AERIMS</title>
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AERIMS WEB </title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="container">
-        <h2>AERIMS</h2>
-        <form id="expiryForm">
-            <label for="rfidCode">RFID Code:</label>
-            <input type="text" id="rfidCode" name="rfidCode" required>
 
-            <label for="expiryDate">Expiry Date:</label>
-            <input type="date" id="expiryDate" name="expiryDate" required>
+  <h1>AERIMS WEB</h1>
 
-            <button type="button" onclick="addData()">Add RFID Data</button>
-        </form>
-    </div>
+  <!-- Display Latest RFID NUID -->
+ <!-- <p id="latestRFIDNUID">Latest RFID NUID: Loading...</p>--> 
 
-    <script src="js/script.js"></script>
+  <!-- Form for modifying product -->
+  <form id="modifyProductForm">
+    <!-- Display RFID Code -->
+    <p id="rfidCodeDisplay">RFID Code: </p>
+
+    <!-- Input fields for product modification -->
+    <label for="productName">Product Name:</label>
+    <input type="text" id="productName" name="productName" required>
+
+    <label for="expiryDate">Expiry Date:</label>
+    <input type="date" id="expiryDate" name="expiryDate" required>
+
+    <!-- Button to trigger product modification -->
+    <button type="button" onclick="modifyProduct()">Save Product</button>
+  </form>
+  <script src="js/script.js"></script>
+
 </body>
 </html>

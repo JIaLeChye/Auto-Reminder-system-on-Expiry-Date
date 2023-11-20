@@ -1,32 +1,43 @@
+/* Add this CSS to make the page mobile-friendly */
+
 body {
-    font-family: Arial, sans-serif;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.container {
-    max-width: 400px;
-    margin: 50px auto;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
 }
 
-label {
-    display: block;
-    margin-bottom: 8px;
+#latestRFIDNUID,
+#rfidCodeDisplay,
+label,
+input,
+button {
+  display: block;
+  margin-bottom: 15px;
 }
 
-input {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 12px;
-    box-sizing: border-box;
+form {
+  max-width: 300px;
+  margin: 0 auto;
 }
 
 button {
-    background-color: #4caf50;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+  background-color: #4caf50;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Responsive styles for smaller screens */
+@media only screen and (max-width: 600px) {
+  form {
+    max-width: 100%;
+  }
 }
