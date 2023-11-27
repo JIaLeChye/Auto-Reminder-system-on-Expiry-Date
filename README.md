@@ -15,4 +15,4 @@
 
 
 <br> 
-- For any Enquiry Feel Free to contact me via <a href="mailto:jailecjl2016@gmail.com" > Email <a/> 
+- For any Enquiry Feel Free to contact me via <a href="mailto:jailecjl2016@gmail.com" > Email </a> 
