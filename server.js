@@ -24,8 +24,8 @@ const client = mqtt.connect(mqtt_url, option);
   const dbConfig = {
     host: '192.168.85.214',
     user: 'AERIMS',
-    password: '123456789',
-    database: 'AERIMS',
+    password: '123456',
+    database: 'aerims',
     insecureAuth: true,
   };
 
@@ -37,6 +37,18 @@ const client = mqtt.connect(mqtt_url, option);
     } catch (error) {
       console.error('Error connecting to MySQL database:', error);
     }
+    client.on('connect', () => {
+      console.log('Connected to MQTT server');
+      // You can perform additional tasks here after the MQTT connection is established
+      client.subscribe(topic, { qos });
+    });
+
+    client.on('error', (error) => {
+      console.error('MQTT client error:', error);
+      // Handle reconnection or other strategies as needed
+    });
+    
+
   }
   
   async function checkDatabaseConnection() {
@@ -52,11 +64,7 @@ const client = mqtt.connect(mqtt_url, option);
     }
   }
 
-
-
-
-checkDatabaseConnection();
-
+// Handle MQTT messages
 client.on('message', async (topic, payload) => {
   try {
     console.log('message received on topic:', topic, payload.toString());
@@ -68,26 +76,25 @@ client.on('message', async (topic, payload) => {
     console.error('Error inserting RFID NUID:', error);
   }
 });
-client.on('error', (error) => {
-  console.error('MQTT client error:', error);
-  // Handle reconnection or other strategies as needed
-});
+
 
 
   app.use(cors());
   app.use(express.json());
 
-  app.get('/', async (req, res) => {
+  app.get('/latestRFIDNUID', async (req, res) => {
     try {
       const [latestRFIDNUIDRow] = await connection.query(
-        'SELECT NUID FROM Product_data ORDER BY timestamp_column DESC LIMIT 1'
+        'SELECT * FROM Product_data ORDER BY timestamp_column DESC LIMIT 1'
       );
+      console.log('Latest RFID NUID row:', latestRFIDNUIDRow);
       const latestRFIDNUID = latestRFIDNUIDRow?.NUID || null;
+      console.log('Latest RFID NUID:', latestRFIDNUID);
       res.json({ latestRFIDNUID });
     } catch (error) {
       console.error('Error fetching latest RFID NUID:', error);
       res.status(500).json({ error: 'Internal Server Error' });
-    }
+    }    
   });
 
   const selectAllProductDataQuery =
@@ -139,13 +146,16 @@ app.listen(port, () => {
 
 startServer();
 
+// Handle graceful shutdown
 process.on('SIGINT', async () => {
   try {
-    await pool.end();
-    console.log('MySQL connection pool closed.');
+    await connection.end();
+    console.log('MySQL connection closed.');
+    client.end(); // Close the MQTT connection
+    console.log('MQTT connection closed.');
     process.exit();
   } catch (error) {
-    console.error('Error closing MySQL connection pool:', error);
+    console.error('Error during graceful shutdown:', error);
     process.exit(1);
   }
 });
