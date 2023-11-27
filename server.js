@@ -24,7 +24,7 @@ const client = mqtt.connect(mqtt_url, option);
   const dbConfig = {
     host: '192.168.85.214',
     user: 'AERIMS',
-    password: '123456',
+    password: '123',
     database: 'aerims',
     insecureAuth: true,
   };
@@ -87,16 +87,26 @@ client.on('message', async (topic, payload) => {
       const [latestRFIDNUIDRow] = await connection.query(
         'SELECT * FROM Product_data ORDER BY timestamp_column DESC LIMIT 1'
       );
-      console.log('Latest RFID NUID row:', latestRFIDNUIDRow);
-      const latestRFIDNUID = latestRFIDNUIDRow?.NUID || null;
-      console.log('Latest RFID NUID:', latestRFIDNUID);
-      res.json({ latestRFIDNUID });
+  
+      // Access the first (and only) row
+      const latestRFIDNUIDRowData = latestRFIDNUIDRow[0];
+  
+      // Access individual fields and handle null values
+      const latestRFIDNUID = latestRFIDNUIDRowData?.NUID || null;
+      const productName = latestRFIDNUIDRowData?.Product_name || null;
+      const expiryDate = latestRFIDNUIDRowData?.expiry_date || null;
+  
+      //console.log('Latest RFID NUID:', latestRFIDNUID);
+      //console.log('Product Name:', productName);
+      //console.log('Expiry Date:', expiryDate);
+  
+      res.json({ latestRFIDNUID, productName, expiryDate });
     } catch (error) {
       console.error('Error fetching latest RFID NUID:', error);
       res.status(500).json({ error: 'Internal Server Error' });
-    }    
+    }
   });
-
+  
   const selectAllProductDataQuery =
     'SELECT NUID, Product_name, DATE_FORMAT(expiry_date, "%Y-%m-%d %H:%i:%s") AS expiry_date FROM Product_data';
 
