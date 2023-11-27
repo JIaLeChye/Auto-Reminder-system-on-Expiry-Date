@@ -1,7 +1,7 @@
 // Function to fetch and display product data
 const fetchProductData = async () => {
   try {
-    const response = await fetch('http://localhost:3000/allProductData');
+    const response = await fetch('http://192.168.85.214:3000/allProductData');
     const { productData } = await response.json();
 
     const productDataListElement = document.getElementById('productDataList');

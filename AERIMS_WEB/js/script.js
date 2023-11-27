@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const fetchLatestRFIDNUID = async () => {
     try {
-      const response = await fetch('http://localhost:3000/latestRFIDNUID');
+      const response = await fetch('http://192.168.85.214:3000/latestRFIDNUID');
       const data = await response.json();
 
       const latestRFIDNUID = data.latestRFIDNUID;
@@ -55,7 +55,7 @@ const modifyProduct = async () => {
   }
 
   try {
-    const response = await fetch('http://localhost:3000/modifyProduct', {
+    const response = await fetch('http://192.168.85.214:3000/modifyProduct', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
