@@ -63,20 +63,20 @@ const client = mqtt.connect(mqtt_url, option);
       throw error;
     }
   }
-
+  let latestRFIDNUID = null;
 // Handle MQTT messages
 client.on('message', async (topic, payload) => {
   try {
-    console.log('message received on topic:', topic, payload.toString());
+    console.log('Message received on topic:', topic, payload.toString());
     const rfidNUID = payload.toString();
+    latestRFIDNUID = rfidNUID; // Update the latest RFID NUID
     const insertQuery = 'INSERT INTO Product_data (NUID) VALUES (?)';
     await connection.execute(insertQuery, [rfidNUID]);
     console.log('RFID NUID inserted successfully:', rfidNUID);
   } catch (error) {
-    console.error('Error inserting RFID NUID:', error);
+    console.error('Error handling MQTT message:', error);
   }
 });
-
 
 
   app.use(cors());
@@ -84,23 +84,8 @@ client.on('message', async (topic, payload) => {
 
   app.get('/latestRFIDNUID', async (req, res) => {
     try {
-      const [latestRFIDNUIDRow] = await connection.query(
-        'SELECT * FROM Product_data ORDER BY timestamp_column DESC LIMIT 1'
-      );
-  
-      // Access the first (and only) row
-      const latestRFIDNUIDRowData = latestRFIDNUIDRow[0];
-  
-      // Access individual fields and handle null values
-      const latestRFIDNUID = latestRFIDNUIDRowData?.NUID || null;
-      const productName = latestRFIDNUIDRowData?.Product_name || null;
-      const expiryDate = latestRFIDNUIDRowData?.expiry_date || null;
-  
-      //console.log('Latest RFID NUID:', latestRFIDNUID);
-      //console.log('Product Name:', productName);
-      //console.log('Expiry Date:', expiryDate);
-  
-      res.json({ latestRFIDNUID, productName, expiryDate });
+      // Send the latest RFID NUID
+      res.json({ latestRFIDNUID });
     } catch (error) {
       console.error('Error fetching latest RFID NUID:', error);
       res.status(500).json({ error: 'Internal Server Error' });
@@ -108,7 +93,7 @@ client.on('message', async (topic, payload) => {
   });
   
   const selectAllProductDataQuery =
-    'SELECT NUID, Product_name, DATE_FORMAT(expiry_date, "%Y-%m-%d %H:%i:%s") AS expiry_date FROM Product_data';
+    'SELECT NUID, Product_name, DATE_FORMAT(expiry_date, "%Y-%m-%d") AS expiry_date FROM Product_data ORDER BY expiry_date';
 
   app.get('/allProductData', async (req, res) => {
     try {

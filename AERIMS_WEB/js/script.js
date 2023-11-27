@@ -9,11 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const latestRFIDNUID = data.latestRFIDNUID;
 
-      if (latestRFIDNUIDElement) {
-        latestRFIDNUIDElement.textContent = `Latest RFID NUID: ${latestRFIDNUID}`;
-      } else {
-        console.error('Element with id "latestRFIDNUID" not found.');
-      }
 
       if (rfidCodeDisplayElement) {
         rfidCodeDisplayElement.innerText = `RFID Code: ${latestRFIDNUID}`;
@@ -39,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(fetchLatestRFIDNUID, 1000);
 });
 
+
 const modifyProduct = async () => {
   const rfidCode = document.getElementById('rfidCodeDisplay').innerText.split(': ')[1];
   const productName = document.getElementById('productName').value;
@@ -48,9 +44,13 @@ const modifyProduct = async () => {
   // Validate expiry date
   const currentDate = new Date();
   const selectedDate = new Date(expiryDate);
+  selectedDate.setMinutes(selectedDate.getMinutes() - selectedDate.getTimezoneOffset());
+
 
   if (selectedDate < currentDate) {
     alert('Expiry date cannot be earlier than today.');
+    console.log('expiryDate:', expiryDate);
+    console.log('selectedDate.toISOString():', selectedDate.toISOString());
     return;
   }
 
@@ -60,7 +60,7 @@ const modifyProduct = async () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ rfidCode, productName, expiryDate }),
+      body: JSON.stringify({ rfidCode, productName, expiryDate: selectedDate.toISOString() }),
     });
 
     const data = await response.json();

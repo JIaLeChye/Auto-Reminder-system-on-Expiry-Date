@@ -1,49 +1,74 @@
-// Function to fetch and display product data
-const fetchProductData = async () => {
-  try {
-    const response = await fetch('http://192.168.85.214:3000/allProductData');
-    const { productData } = await response.json();
+// js/viewData.js
 
-    const productDataListElement = document.getElementById('productDataList');
-    if (productDataListElement) {
-      if (productData && productData.length > 0) {
-        renderProductData(productDataListElement, productData);
-      } else {
-        productDataListElement.innerHTML = 'No product data available.';
-      }
+document.addEventListener('DOMContentLoaded', () => {
+  let latestScannedNUID = ''; // Add this variable to store the latest scanned NUID
+  const productDataListElement = document.getElementById('productDataList');
+
+  const scanProduct = async () => {
+    const latestRFIDNUIDElement = document.getElementById('latestRFIDNUID');
+    const rfidCodeDisplayElement = document.getElementById('rfidCodeDisplay');
+
+    try {
+      const response = await fetch('http://192.168.85.214:3000/latestRFIDNUID');
+      const data = await response.json();
+
+      const latestRFIDNUID = data.latestRFIDNUID;
+      
+      latestScannedNUID = latestRFIDNUID; // Update the latest scanned NUID
+    } catch (error) {
+      console.error('Error fetching latest RFID NUID:', error);
     }
-  } catch (error) {
-    console.error('Error fetching product data:', error);
-  }
-};
+  };
 
-// Function to render product data in HTML
-const renderProductData = (element, productData) => {
-  const productListHTML = productData
-    .map(
-      (product) => `
-        <div>
-          <strong>NUID:</strong> ${product.NUID}<br>
-          <strong>Product Name:</strong> ${product.Product_name}<br>
-          <strong>Expiry Date:</strong> ${formatDate(product.expiry_date)}<br>
-          <hr>
-        </div>
-      `
-    )
-    .join('');
+  const fetchProductData = async () => {
+    try {
+      const response = await fetch('http://192.168.85.214:3000/allProductData');
+      const data = await response.json();
 
-  element.innerHTML = productListHTML;
-};
+      if (productDataListElement) {
+        if (data.productData && data.productData.length > 0) {
+          const productListHTML = data.productData.map(product => {
+            const isScannedProduct = product.NUID === latestScannedNUID;
+            return `
+              <div class="${isScannedProduct ? 'scanned-product' : ''}">
+                <strong>NUID:</strong> ${product.NUID}<br>
+                <strong>Product Name:</strong> ${product.Product_name}<br>
+                <strong>Expiry Date:</strong> ${formatDate(product.expiry_date)}<br>
+                <hr>
+              </div>
+            `;
+          }).join('');
 
-// Function to format date
-const formatDate = (dateString) => {
-  const options = { year: 'numeric', month: 'long', day: 'numeric' };
-  const date = new Date(dateString);
-  return date.toLocaleDateString(undefined, options);
-};
+          productDataListElement.innerHTML = productListHTML;
+        } else {
+          productDataListElement.innerHTML = 'No product data available.';
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching product data:', error);
+    }
+  };
+  
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+  
+    // Check if the date is valid
+    if (isNaN(date.getTime())) {
+      return 'Invalid Date';
+    }
+  
+    // Get the date part in the format YYYY-MM-DD
+    return date.toISOString().split('T')[0];
+  };
+  
 
-// Fetch product data on page load
-fetchProductData();
+  // Set up periodic refresh for product data (every 5 seconds)
+  setInterval(fetchProductData, 1000);
 
-// Set up periodic refresh (every 1 minute)
-setInterval(fetchProductData, 60000);
+  // Initial fetch
+  fetchProductData();
+  // Set up periodic refresh for scanned NUIDs (every 5 seconds)
+  setInterval(scanProduct, 1000);
+  // Initial scan
+  scanProduct(); // Call the scanProduct function to fetch the latest scanned NUID
+});
