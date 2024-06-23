@@ -7,11 +7,11 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 const clientId = `mqtt_${Math.random().toString(16).slice(3)}`;
-const username = 'Web';
-const password = 'web123';
+const username = 'AERIMS_WEB';
+const password = 'aerims_web';
 const topic = 'aerims/nuid';
 const qos = 2;
-const mqtt_url = 'mqtts://j6ee141d.ala.us-east-1.emqxsl.com:8883/mqtt';
+const mqtt_url = 'mqtts://bc26983f.ala.us-east-1.emqxsl.com:8883/mqtt';
 
 const option = {
   clientId,
@@ -22,7 +22,7 @@ const option = {
 const client = mqtt.connect(mqtt_url, option);
 
   const dbConfig = {
-    host: '192.168.85.214',
+    host: '127.0.0.1',
     user: 'AERIMS',
     password: '123',
     database: 'aerims',
