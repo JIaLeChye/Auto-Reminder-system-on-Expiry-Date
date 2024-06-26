@@ -5,7 +5,7 @@ const mysql = require('mysql2/promise');
 
 const app = express();
 const port = process.env.PORT || 3000;
-
+const serverIP = '0.0.0.0';
 const clientId = `mqtt_${Math.random().toString(16).slice(3)}`;
 const username = 'AERIMS_WEB';
 const password = 'aerims_web';
@@ -23,7 +23,7 @@ const client = mqtt.connect(mqtt_url, option);
 
   const dbConfig = {
     host: '127.0.0.1',
-    user: 'AERIMS',
+    user: 'aerims',
     password: '123',
     database: 'aerims',
     insecureAuth: true,
@@ -47,8 +47,6 @@ const client = mqtt.connect(mqtt_url, option);
       console.error('MQTT client error:', error);
       // Handle reconnection or other strategies as needed
     });
-    
-
   }
   
   async function checkDatabaseConnection() {
@@ -64,15 +62,22 @@ const client = mqtt.connect(mqtt_url, option);
     }
   }
   let latestRFIDNUID = null;
+  let isrfidExist = false;
 // Handle MQTT messages
 client.on('message', async (topic, payload) => {
   try {
     console.log('Message received on topic:', topic, payload.toString());
     const rfidNUID = payload.toString();
     latestRFIDNUID = rfidNUID; // Update the latest RFID NUID
-    const insertQuery = 'INSERT INTO Product_data (NUID) VALUES (?)';
-    await connection.execute(insertQuery, [rfidNUID]);
-    console.log('RFID NUID inserted successfully:', rfidNUID);
+    const checkQuery = 'SELECT NUID FROM Product_data WHERE NUID = ?';
+    const [rows] = await connection.execute(checkQuery, [rfidNUID]);
+    if (rows.length > 0) {
+      isrfidExist = true;
+      console.log('RFID NUID exists in the database', rfidNUID);
+    } else {
+      isrfidExist = false;
+      console.log('RFID NUID does not exist in the database', rfidNUID);
+    }
   } catch (error) {
     console.error('Error handling MQTT message:', error);
   }
@@ -81,21 +86,33 @@ client.on('message', async (topic, payload) => {
 
   app.use(cors());
   app.use(express.json());
+  app.get('/aerims/ping', (req,res) =>{
+   console.log('Pinrecoved from the webpage side');
+   res.send('server is up and running');
+  });
 
-  app.get('/latestRFIDNUID', async (req, res) => {
+  app.get('/aerims/latestRFIDNUID', async (req, res) => {
     try {
-      // Send the latest RFID NUID
-      res.json({ latestRFIDNUID });
+      if (isrfidExist === true )
+        {
+        const [rows] = await connection.execute('SELECT * FROM Product_data WHERE NUID = ?', [latestRFIDNUID]);
+        const rfidCode = rows[0].NUID;
+        const productName = rows[0].Product_name; 
+        const expiryDate = rows[0].expiry_date; 
+        res.json({ latestRFIDNUID, productName, expiryDate });
+        } else { 
+        res.json({ latestRFIDNUID });
+        } 
+  //      console.log('NUID send to the Webpage')
     } catch (error) {
       console.error('Error fetching latest RFID NUID:', error);
       res.status(500).json({ error: 'Internal Server Error' });
     }
   });
-  
   const selectAllProductDataQuery =
     'SELECT NUID, Product_name, DATE_FORMAT(expiry_date, "%Y-%m-%d") AS expiry_date FROM Product_data ORDER BY expiry_date';
 
-  app.get('/allProductData', async (req, res) => {
+  app.get('/aerims/allProductData', async (req, res) => {
     try {
       const [results] = await connection.query(selectAllProductDataQuery);
       const productData = results.map((result) => ({
@@ -109,48 +126,54 @@ client.on('message', async (topic, payload) => {
       res.status(500).json({ error: 'Internal Server Error' });
     }
   });
-
-  app.post('/modifyProduct', async (req, res) => {
+  app.post('/aerims/modifyProduct', async (req, res) => {
     try {
       const { rfidCode, productName, expiryDate } = req.body;
 
       if (!productName || !expiryDate) {
         return res.status(400).json({ success: false, message: 'Product name and expiry date are required.' });
       }
-
-      const updateQuery = 'UPDATE Product_data SET Product_name = ?, expiry_date = ? WHERE NUID = ?';
-
+    if (isrfidExist === false)
+      {
+      const insertQuery = 'INSERT INTO Product_data (NUID, Product_name, expiry_date) VALUES (?, ?, ?)';
+      console.log(`Insert Request: NUID: ${rfidCode} Product_name: ${productName} Expiry_date: ${expiryDate}`)
+      await connection.execute(insertQuery, [rfidCode, productName, expiryDate]);
+      //console.log(`Insert Request: NUID: ${rfidCode} Product_name: ${productName} Expiry_date: ${expiryDate}`)
+      } else {
+      const updateQuery = 'UPDATE Product_data SET Product_name = ?, expiry_date = ?  WHERE NUID = ?';
+      console.log(`Modify Request: NUID: ${rfidCode} Product_name: ${productName} Expiry_date: ${expiryDate}`)
       await connection.execute(updateQuery, [productName, expiryDate, rfidCode]);
+      }
       res.json({ success: true, message: 'Product modified successfully' });
     } catch (error) {
       console.error('Error modifying product:', error);
       res.status(500).json({ success: false, message: 'Internal Server Error' });
-    }
+    } 
   });
-
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Something went wrong!');
-});
-
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
-
-startServer();
-
-// Handle graceful shutdown
-process.on('SIGINT', async () => {
-  try {
-    await connection.end();
-    console.log('MySQL connection closed.');
-    client.end(); // Close the MQTT connection
-    console.log('MQTT connection closed.');
-    process.exit();
-  } catch (error) {
-    console.error('Error during graceful shutdown:', error);
-    process.exit(1);
-  }
-});
+  // Error handling middleware
+  app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send('Something went wrong!');
+  });
+  
+  
+   
+  app.listen(port,serverIP, () => {
+    console.log(`Server is running ${serverIP} on port ${port}`);
+  });
+  
+  startServer();
+  
+  // Handle graceful shutdown
+  process.on('SIGINT', async () => {
+    try {
+      await connection.end();
+      console.log('MySQL connection closed.');
+      client.end(); // Close the MQTT connection
+      console.log('MQTT connection closed.');
+      process.exit();
+    } catch (error) {
+      console.error('Error during graceful shutdown:', error);
+      process.exit(1);
+    }
+  }); 
