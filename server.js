@@ -109,6 +109,7 @@ client.on('message', async (topic, payload) => {
       res.status(500).json({ error: 'Internal Server Error' });
     }
   });
+
   const selectAllProductDataQuery =
     'SELECT NUID, Product_name, DATE_FORMAT(expiry_date, "%Y-%m-%d") AS expiry_date FROM Product_data ORDER BY expiry_date';
 
@@ -138,6 +139,7 @@ client.on('message', async (topic, payload) => {
       const insertQuery = 'INSERT INTO Product_data (NUID, Product_name, expiry_date) VALUES (?, ?, ?)';
       console.log(`Insert Request: NUID: ${rfidCode} Product_name: ${productName} Expiry_date: ${expiryDate}`)
       await connection.execute(insertQuery, [rfidCode, productName, expiryDate]);
+      
       //console.log(`Insert Request: NUID: ${rfidCode} Product_name: ${productName} Expiry_date: ${expiryDate}`)
       } else {
       const updateQuery = 'UPDATE Product_data SET Product_name = ?, expiry_date = ?  WHERE NUID = ?';
