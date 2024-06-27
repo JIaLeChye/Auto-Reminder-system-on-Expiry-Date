@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   let latestScannedNUID = null; // Variable to store the latest scanned NUID
   const productDataListElement = document.getElementById('productDataList');
-  const serverIP = '35.208.206.13'; // Replace with your server's external IP
+  const serverIP = 'xxx.xxx.xxx.xxx'; // Replace with your server's external IP
 
   // const pingServer = async () => {
   //   try {

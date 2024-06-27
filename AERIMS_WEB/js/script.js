@@ -1,5 +1,5 @@
 
-const serverURL =  'http://35.208.206.13:3000/aerims' ;
+const serverURL =  'http://xxx.xxx.xxx.xxx:3000/aerims' ; // Replace to your pubilc IP Address 
 
 document.addEventListener('DOMContentLoaded', () => {
   // const latestRFIDNUIDElement = document.getElementById('latestRFIDNUID');

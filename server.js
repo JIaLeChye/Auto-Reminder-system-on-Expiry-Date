@@ -11,7 +11,7 @@ const username = 'AERIMS_WEB';
 const password = 'aerims_web';
 const topic = 'aerims/nuid';
 const qos = 2;
-const mqtt_url = 'mqtts://bc26983f.ala.us-east-1.emqxsl.com:8883/mqtt';
+const mqtt_url = 'mqtts://bc26983fx.ala.us-east-1.emqxsl.com:8883/mqtt'; // replace to the MQTT API. (mqts://<MQTT server apilink>:<mqttport>/<comunication protocol>)
 
 const option = {
   clientId,
@@ -21,25 +21,29 @@ const option = {
 
 const client = mqtt.connect(mqtt_url, option);
 
-  const dbConfig = {
-    host: '127.0.0.1',
+  const pool  = mysql.createPool({
+    host: '127.0.0.1', // for local database (Replace if using cloud storage@database)
     user: 'aerims',
     password: '123',
     database: 'aerims',
-    insecureAuth: true,
-  };
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+  });
 
-  let connection; // Declare the connection variable outside the function
+   // Declare the connection variable outside the function
 
   async function startServer() {
     try {
-      connection = await checkDatabaseConnection();
-    } catch (error) {
-      console.error('Error connecting to MySQL database:', error);
-    }
+    await pool.getConnection();
+    console.log('Connected to MySQL database');
+  } catch (error) {
+    console.error('Error connecting to MySQL database:', error);
+    process.exit(1); // Exit the process with a failure code
+  }
     client.on('connect', () => {
       console.log('Connected to MQTT server');
-      // You can perform additional tasks here after the MQTT connection is established
+      // You can perform additional tasks here after the MQTT pool is established
       client.subscribe(topic, { qos });
     });
 
@@ -49,18 +53,18 @@ const client = mqtt.connect(mqtt_url, option);
     });
   }
   
-  async function checkDatabaseConnection() {
-    let connection;
-    try {
-      connection = await mysql.createConnection(dbConfig);
-      await connection.ping();
-      console.log('Connected to MySQL database');
-      return connection;
-    } catch (error) {
-      console.error('Error connecting to MySQL database:', error);
-      throw error;
-    }
-  }
+  // async function checkDatabaseConnection() {
+  //   // let connection;
+  //   try {
+  //     connection = await mysql.createConnection(dbConfig);
+  //     await connection.ping();
+  //     console.log('Connected to MySQL database');
+  //     return connection;
+  //   } catch (error) {
+  //     console.error('Error connecting to MySQL database:', error);
+  //     throw error;
+  //   }
+  // }
   let latestRFIDNUID = null;
   let isrfidExist = false;
 // Handle MQTT messages
@@ -70,7 +74,7 @@ client.on('message', async (topic, payload) => {
     const rfidNUID = payload.toString();
     latestRFIDNUID = rfidNUID; // Update the latest RFID NUID
     const checkQuery = 'SELECT NUID FROM Product_data WHERE NUID = ?';
-    const [rows] = await connection.execute(checkQuery, [rfidNUID]);
+    const [rows] = await pool.execute(checkQuery, [rfidNUID]);
     if (rows.length > 0) {
       isrfidExist = true;
       console.log('RFID NUID exists in the database', rfidNUID);
@@ -86,17 +90,31 @@ client.on('message', async (topic, payload) => {
 
   app.use(cors());
   app.use(express.json());
-  app.get('/aerims/ping', (req,res) =>{
-   console.log('Pinrecoved from the webpage side');
-   res.send('server is up and running');
+  app.get('/aerims/ping', async (req, res) => {
+    try {
+      // First, send the response to the client
+      res.write('Server is up and running'); // Using res.write instead of res.send
+
+      // Asynchronously ping the database to check the connection
+      await pool.query('SELECT 1');
+
+      // If the database is reachable, send status to client
+      res.end(JSON.stringify({ server: 'online', database: 'online' }));
+      
+    } catch (error) {
+      // If there's an error during ping, handle it gracefully
+      console.error('Error pinging database:', error);
+      res.status(500).json({ error: 'Database Unreachable', details: error.message });
+      return; // Exit the function to prevent sending multiple responses
+    }
   });
+  
 
   app.get('/aerims/latestRFIDNUID', async (req, res) => {
     try {
-      if (isrfidExist === true )
+      if (isrfidExist)
         {
-        const [rows] = await connection.execute('SELECT * FROM Product_data WHERE NUID = ?', [latestRFIDNUID]);
-        const rfidCode = rows[0].NUID;
+        const [rows] = await pool.execute('SELECT * FROM Product_data WHERE NUID = ?', [latestRFIDNUID]);
         const productName = rows[0].Product_name; 
         const expiryDate = rows[0].expiry_date; 
         res.json({ latestRFIDNUID, productName, expiryDate });
@@ -115,7 +133,7 @@ client.on('message', async (topic, payload) => {
 
   app.get('/aerims/allProductData', async (req, res) => {
     try {
-      const [results] = await connection.query(selectAllProductDataQuery);
+      const [results] = await pool.query(selectAllProductDataQuery);
       const productData = results.map((result) => ({
         NUID: result.NUID,
         Product_name: result.Product_name,
@@ -138,13 +156,11 @@ client.on('message', async (topic, payload) => {
       {
       const insertQuery = 'INSERT INTO Product_data (NUID, Product_name, expiry_date) VALUES (?, ?, ?)';
       console.log(`Insert Request: NUID: ${rfidCode} Product_name: ${productName} Expiry_date: ${expiryDate}`)
-      await connection.execute(insertQuery, [rfidCode, productName, expiryDate]);
-      
-      //console.log(`Insert Request: NUID: ${rfidCode} Product_name: ${productName} Expiry_date: ${expiryDate}`)
+      await pool.execute(insertQuery, [rfidCode, productName, expiryDate]);
       } else {
       const updateQuery = 'UPDATE Product_data SET Product_name = ?, expiry_date = ?  WHERE NUID = ?';
       console.log(`Modify Request: NUID: ${rfidCode} Product_name: ${productName} Expiry_date: ${expiryDate}`)
-      await connection.execute(updateQuery, [productName, expiryDate, rfidCode]);
+      await pool.execute(updateQuery, [productName, expiryDate, rfidCode]);
       }
       res.json({ success: true, message: 'Product modified successfully' });
     } catch (error) {
@@ -169,7 +185,7 @@ client.on('message', async (topic, payload) => {
   // Handle graceful shutdown
   process.on('SIGINT', async () => {
     try {
-      await connection.end();
+      await pool.end();
       console.log('MySQL connection closed.');
       client.end(); // Close the MQTT connection
       console.log('MQTT connection closed.');
