@@ -36,65 +36,55 @@ h1 {
 }
 
 #productDataList div {
-  margin-bottom: 30px;
-}
-
-label {
-  display: block;
-  margin-bottom: 12px;
-  color: #7d7d7d;
-}
-
-input {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 16px;
-  box-sizing: border-box;
-  border: 1px solid #5e5e5e;
-  border-radius: 6px;
-}
-
-button {
-  background-color: #4caf50;
-  color: #fff;
-  padding: 15px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-button:hover {
-  background-color: #45a049;
+  margin: 15px; 
 }
 
 .product-item {
-  background-color: #5e5e5e;
+  background-color: transparent;
+  color: #fff;
   padding: 15px;
   border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
   margin-bottom: 20px;
-  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out, border-color 0.3s ease-in-out;
+  border: 2px solid transparent; /* Regular border thickness */
 }
 
 .product-item:hover {
   transform: scale(1.02);
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
 }
+
 .scanned-product {
-  background-color: #4caf50;
-  color: #fff;
   border-radius: 8px;
   padding: 15px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-  transition: background-color 0.3s ease-in-out;
+  transition: transform 0.3s ease-in-out, background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+  transform: scale(1.05); /* Zoom effect */
+  border: 4px solid #f39c12; /* Thicker border for scanned products */
 }
 
-.scanned-product:hover {
-  background-color: #45a049;
+/* Styles for expiry statuses */
+.expired {
+  background-color: #a00;
+  border-color: #800000;;
 }
 
-.highlighted {
-  border: 2px solid #f39c12;
-  box-shadow: 0 0 15px #f39c12;
+.near-expiry {
+  background-color: #aa8000;
+  border-color: #886b00;
 }
 
+.short-life {
+  background-color: #ff8c00;
+  border-color: #e67e00;
+}
+
+.medium-life {
+  background-color: #daa520;
+  border-color: #b8860b;
+}
+
+.long-life {
+  background-color: #0a0;
+  border-color: #008000;
+}
